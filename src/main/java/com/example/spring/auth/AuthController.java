@@ -1,18 +1,25 @@
 package com.example.spring.auth;
 
+import java.text.SimpleDateFormat;
+import java.util.Date;
+
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.ModelAndView;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.example.spring.user.UserService;
 import com.example.spring.user.UserVo;
 
+@Controller
+@RequestMapping("/auth")
 public class AuthController {
 
     @Autowired
@@ -21,24 +28,24 @@ public class AuthController {
     @Autowired
     private AuthService authService;
 
-    // 사용자 등록
-    @GetMapping("/auth/register")
+    // 회원가입
+    @GetMapping("/register")
     public ModelAndView register() {
         return new ModelAndView("auth/register");
     }
 
-    // 사용자 등록
-    @PostMapping("/auth/register")
-    public ModelAndView register(@RequestBody UserVo userVo, RedirectAttributes redirectAttributes) {
+    // 회원가입
+    @PostMapping("/register")
+    public ModelAndView register(UserVo userVo, RedirectAttributes redirectAttributes) {
         ModelAndView mav = new ModelAndView();
 
         boolean created = userService.create(userVo);
         
         if (created) {
-            redirectAttributes.addFlashAttribute("successMessage", "게시글이 등록되었습니다.");
+            redirectAttributes.addFlashAttribute("successMessage", "회원가입이 완료되었습니다.");
             mav.setViewName("redirect:/auth/login");
         } else {
-            redirectAttributes.addFlashAttribute("errorMessage", "게시글이 등록되지 않았습니다.");
+            redirectAttributes.addFlashAttribute("errorMessage", "회원가입에 실패하였습니다.");
             mav.setViewName("redirect:/auth/register");
         }
         
@@ -46,27 +53,47 @@ public class AuthController {
     }    
 
     // 로그인
-    @GetMapping("/auth/login")
-    public ModelAndView login() {
-        return new ModelAndView("auth/login");
+    @GetMapping("/login")
+    public ModelAndView login(@RequestParam(required = false) String error) {
+        ModelAndView mav = new ModelAndView();
+        if (error != null && error.equals("auth")) {
+            mav.addObject("errorMessage", "로그인이 필요합니다.");
+        }
+        mav.setViewName("auth/login");
+        return mav;
     }
 
     // 로그인
-    @PostMapping("/auth/login")
-    public ModelAndView login(@RequestBody UserVo userVo, HttpServletRequest request, RedirectAttributes redirectAttributes) {
+    @PostMapping("/login")
+    public ModelAndView login(UserVo userVo, HttpServletRequest request, RedirectAttributes redirectAttributes) {
         ModelAndView mav = new ModelAndView();
 
-        UserVo user = userService.read(userVo);
-        
-        if (user != null) {
-            // 세션 생성
-            HttpSession session = request.getSession(true);
-            session.setAttribute("user", user);
+        try {
+            userVo = authService.login(userVo);
+            
+            if (userVo != null) {
+                // 세션 생성
+                HttpSession session = request.getSession(true);
+                session.setAttribute("user", userVo);
+                session.setAttribute("isLoggedIn", true);
 
-            redirectAttributes.addFlashAttribute("successMessage", "로그인되었습니다.");
-            mav.setViewName("redirect:/auth/profile");
-        } else {
-            redirectAttributes.addFlashAttribute("errorMessage", "로그인에 실패하였습니다.");
+                // 로그인 시간 업데이트
+                SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                userVo.setLastLoginAt(sdf.format(new Date()));
+                userService.update(userVo);
+
+                mav.setViewName("redirect:/auth/profile");
+                return mav;
+            }
+            
+            redirectAttributes.addFlashAttribute("errorMessage", "아이디 또는 비밀번호가 일치하지 않습니다.");
+            mav.setViewName("redirect:/auth/login");
+            
+        } catch (Exception e) {
+            e.printStackTrace();
+            HttpSession session = request.getSession(false);
+            session.invalidate();
+            redirectAttributes.addFlashAttribute("errorMessage", "로그인 처리 중 오류가 발생했습니다.");
             mav.setViewName("redirect:/auth/login");
         }
 
@@ -74,7 +101,7 @@ public class AuthController {
     }
 
     // 로그아웃
-    @GetMapping("/auth/logout")
+    @GetMapping("/logout")
     public ModelAndView logout(HttpServletRequest request) {
         HttpSession session = request.getSession(false);
         session.invalidate();
@@ -82,27 +109,22 @@ public class AuthController {
     }
 
     // 프로필
-    @GetMapping("/auth/profile")
+    @GetMapping("/profile")
     public ModelAndView profile() {
-        return new ModelAndView("auth/profile");
-    }
-
-    // 프로필
-    @PostMapping("/auth/profile")
-    public ModelAndView profile(@RequestBody UserVo userVo, HttpServletRequest request, RedirectAttributes redirectAttributes) {
         ModelAndView mav = new ModelAndView();
+        mav.setViewName("auth/profile");
         return mav;
     }
 
     // 프로필 수정
-    @GetMapping("/auth/update")
+    @GetMapping("/update")
     public ModelAndView update() {
         return new ModelAndView("auth/update");
     }
 
     // 프로필 수정
-    @PostMapping("/auth/update")
-    public ModelAndView update(@RequestBody UserVo userVo, HttpServletRequest request, RedirectAttributes redirectAttributes) {
+    @PostMapping("/update")
+    public ModelAndView update(UserVo userVo, HttpServletRequest request, RedirectAttributes redirectAttributes) {
         ModelAndView mav = new ModelAndView();
 
         boolean updated = userService.update(userVo);
@@ -117,14 +139,16 @@ public class AuthController {
     }
 
     // 비밀번호 수정
-    @GetMapping("/auth/password")
+    @GetMapping("/password")
     public ModelAndView password() {
-        return new ModelAndView("auth/password");
+        ModelAndView mav = new ModelAndView();
+        mav.setViewName("auth/password");
+        return mav;
     }
 
     // 비밀번호 수정
-    @PostMapping("/auth/password")
-    public ModelAndView password(@RequestBody UserVo userVo, HttpServletRequest request, RedirectAttributes redirectAttributes) {
+    @PostMapping("/password")
+    public ModelAndView password(UserVo userVo, HttpServletRequest request, RedirectAttributes redirectAttributes) {
         ModelAndView mav = new ModelAndView();
 
         boolean updated = userService.updatePassword(userVo);
@@ -140,45 +164,47 @@ public class AuthController {
     }
 
     // 아이디 찾기
-    @GetMapping("/auth/findUserId")
+    @GetMapping("/find-user-id")
     public ModelAndView findUserId() {
         return new ModelAndView("auth/find_user_id");
     }
 
     // 아이디 찾기
-    @PostMapping("/auth/findUserId")
-    public ModelAndView findUserId(@RequestBody UserVo userVo, HttpServletRequest request, RedirectAttributes redirectAttributes) {
+    @PostMapping("/find-user-id")
+    public ModelAndView findUserId(UserVo userVo, HttpServletRequest request, RedirectAttributes redirectAttributes) {
         ModelAndView mav = new ModelAndView();
 
         UserVo user = userService.read(userVo);        
 
         if (user != null) {
             mav.addObject("userId", user.getUserId());
-            redirectAttributes.addFlashAttribute("successMessage", "아이디가 찾았습니다.");
-            mav.setViewName("redirect:/auth/showUserId");
+            redirectAttributes.addFlashAttribute("userId", user.getUserId());
+            mav.setViewName("redirect:/auth/show-user-id");
         } else {
             redirectAttributes.addFlashAttribute("errorMessage", "아이디를 찾을 수 없습니다.");
-            mav.setViewName("redirect:/auth/find_user_id");
+            mav.setViewName("redirect:/auth/find-user-id");
         }
 
         return mav;
     }
 
     // 아이디 찾기 결과
-    @GetMapping("/auth/showUserId")
+    @GetMapping("/show-user-id")
     public ModelAndView showUserId() {
-        return new ModelAndView("auth/show_user_id");
+        ModelAndView mav = new ModelAndView();
+        mav.setViewName("auth/show_user_id");
+        return mav;
     }
 
     // 비밀번호 초기화
-    @GetMapping("/auth/resetPassword")
+    @GetMapping("/reset-password")
     public ModelAndView resetPassword() {
         return new ModelAndView("auth/reset_password");
     }
 
     // 비밀번호 초기화
-    @PostMapping("/auth/resetPassword")
-    public ModelAndView resetPassword(@RequestBody UserVo userVo, HttpServletRequest request, RedirectAttributes redirectAttributes) {
+    @PostMapping("/reset-password")
+    public ModelAndView resetPassword(UserVo userVo, HttpServletRequest request, RedirectAttributes redirectAttributes) {
         ModelAndView mav = new ModelAndView();
 
         UserVo user = userService.read(userVo);        
@@ -187,8 +213,8 @@ public class AuthController {
             String rndPassword = authService.resetPassword(userVo);
 
             mav.addObject("rndPassword", rndPassword);
-            redirectAttributes.addFlashAttribute("successMessage", "비밀번호가 초기화되었습니다.");
-            mav.setViewName("redirect:/auth/showResetPassword");
+            redirectAttributes.addFlashAttribute("rndPassword", rndPassword);
+            mav.setViewName("redirect:/auth/show-reset-password");
         } else {
             redirectAttributes.addFlashAttribute("errorMessage", "아이디를 찾을 수 없습니다.");
             mav.setViewName("redirect:/auth/reset_password");
@@ -198,8 +224,10 @@ public class AuthController {
     }
 
     // 비밀번호 초기화 결과
-    @GetMapping("/auth/showResetPassword")
+    @GetMapping("/show-reset-password")
     public ModelAndView showResetPassword() {
-        return new ModelAndView("auth/show_reset_password");
+        ModelAndView mav = new ModelAndView();
+        mav.setViewName("auth/show_reset_password");
+        return mav;
     }
 }

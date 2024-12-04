@@ -5,9 +5,9 @@
 
     <resultMap id="userResultMap" type="com.example.spring.user.UserVo">
         <result property="userId" column="USER_ID" />
-        <result property="password" column="PASSWORD" />
+        <result property="passwd" column="PASSWD" />
         <result property="name" column="NAME" />
-        <result property="phone" column="PHONE" />
+        <result property="tel" column="TEL" />
         <result property="email" column="EMAIL" />
         <result property="status" column="STATUS" />
         <result property="lastLoginAt" column="LAST_LOGIN_AT" />
@@ -20,15 +20,15 @@
         <![CDATA[
         INSERT INTO USER (
             USER_ID, 
-            PASSWORD, 
+            PASSWD, 
             NAME, 
-            PHONE, 
+            TEL, 
             EMAIL
         ) VALUES (
             #{userId}, 
-            #{password}, 
+            #{passwd}, 
             #{name}, 
-            #{phone}, 
+            #{tel}, 
             #{email}
         )
         ]]>
@@ -61,19 +61,29 @@
             NAME = #{name},
             ]]>
         </if>
-        <if test="password != null">
+        <if test="passwd != null">
             <![CDATA[
-            PASSWORD = #{password},
+            PASSWD = #{passwd},
             ]]>
         </if>
-        <if test="phone != null">
+        <if test="tel != null">
             <![CDATA[
-            PHONE = #{phone},
+            TEL = #{tel},
             ]]>
         </if>
         <if test="email != null">
             <![CDATA[
             EMAIL = #{email},
+            ]]>
+        </if>
+        <if test="status != null">
+            <![CDATA[
+            STATUS = #{status},
+            ]]>
+        </if>
+        <if test="lastLoginAt != null">
+            <![CDATA[
+            LAST_LOGIN_AT = #{lastLoginAt}
             ]]>
         </if>
         <![CDATA[
@@ -87,7 +97,7 @@
         SELECT
             USER_ID,
             NAME,
-            PHONE,
+            TEL,
             EMAIL,
             STATUS,
             LAST_LOGIN_AT,
@@ -109,9 +119,9 @@
                     AND NAME LIKE CONCAT('%', #{searchKeyword}, '%')
                     ]]>
                 </when>
-                <when test="searchType == 'phone'">
+                <when test="searchType == 'tel'">
                     <![CDATA[
-                    AND PHONE LIKE CONCAT('%', #{searchKeyword}, '%')
+                    AND TEL LIKE CONCAT('%', #{searchKeyword}, '%')
                     ]]>
                 </when>
                 <when test="searchType == 'email'">
@@ -124,7 +134,7 @@
                     AND (
                         USER_ID LIKE CONCAT('%', #{searchKeyword}, '%')
                         OR NAME LIKE CONCAT('%', #{searchKeyword}, '%')
-                        OR PHONE LIKE CONCAT('%', #{searchKeyword}, '%')
+                        OR TEL LIKE CONCAT('%', #{searchKeyword}, '%')
                         OR EMAIL LIKE CONCAT('%', #{searchKeyword}, '%')
                     )
                     ]]>
@@ -155,9 +165,9 @@
                     AND NAME LIKE CONCAT('%', #{searchKeyword}, '%')
                     ]]>
                 </when>
-                <when test="searchType == 'phone'">
+                <when test="searchType == 'tel'">
                     <![CDATA[
-                    AND PHONE LIKE CONCAT('%', #{searchKeyword}, '%')
+                    AND TEL LIKE CONCAT('%', #{searchKeyword}, '%')
                     ]]>
                 </when>
                 <when test="searchType == 'email'">
@@ -170,7 +180,7 @@
                     AND (
                         USER_ID LIKE CONCAT('%', #{searchKeyword}, '%')
                         OR NAME LIKE CONCAT('%', #{searchKeyword}, '%')
-                        OR PHONE LIKE CONCAT('%', #{searchKeyword}, '%')
+                        OR TEL LIKE CONCAT('%', #{searchKeyword}, '%')
                         OR EMAIL LIKE CONCAT('%', #{searchKeyword}, '%')
                     )
                     ]]>

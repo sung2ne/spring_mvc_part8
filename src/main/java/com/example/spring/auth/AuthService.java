@@ -18,14 +18,23 @@ public class AuthService {
     @Autowired
     private PasswordEncoder passwordEncoder;
 
+    // 로그인
+    public UserVo login(UserVo userVo) {
+        UserVo existUserVo = userDao.read(userVo);
+        
+        if (existUserVo != null && passwordEncoder.matches(userVo.getPasswd(), existUserVo.getPasswd())) {
+            return existUserVo;
+        }
+
+        return null;
+    }
+
     // 비밀번호 초기화
     public String resetPassword(UserVo userVo) {
         // 랜덤 비밀번호 생성
         String rndPassword = UUID.randomUUID().toString().substring(0, 8);
-        // 비밀번호 인코딩
         String encodedPassword = passwordEncoder.encode(rndPassword);
-        // 비밀번호 설정
-        userVo.setPassword(encodedPassword);
+        userVo.setPasswd(encodedPassword);
 
         int updated = userDao.update(userVo);
 

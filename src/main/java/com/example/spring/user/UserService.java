@@ -22,8 +22,8 @@ public class UserService {
     // 사용자 등록
     public boolean create(UserVo userVo) {
         // 비밀번호 암호화
-        String encodedPassword = passwordEncoder.encode(userVo.getPassword());
-        userVo.setPassword(encodedPassword);
+        String encodedPassword = passwordEncoder.encode(userVo.getPasswd());
+        userVo.setPasswd(encodedPassword);
 
         int result = userDao.create(userVo);
         return result > 0;
@@ -43,8 +43,8 @@ public class UserService {
     // 비밀번호 수정
     public boolean updatePassword(UserVo userVo) {
         // 비밀번호 암호화
-        String encodedPassword = passwordEncoder.encode(userVo.getPassword());
-        userVo.setPassword(encodedPassword);
+        String encodedPassword = passwordEncoder.encode(userVo.getPasswd());
+        userVo.setPasswd(encodedPassword);
 
         int result = userDao.update(userVo);
         return result > 0;
@@ -76,7 +76,7 @@ public class UserService {
     // 사용자 삭제
     public boolean delete(UserVo userVo, String password) {
         // 비밀번호 검증
-        if (!passwordEncoder.matches(password, userVo.getPassword())) {
+        if (!passwordEncoder.matches(password, userVo.getPasswd())) {
             return false;
         }
 

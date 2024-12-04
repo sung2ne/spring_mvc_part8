@@ -5,6 +5,7 @@ import java.util.Map;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -20,7 +21,7 @@ public class UserController {
 
     // 사용자 목록
     @GetMapping("/")
-    public ModelAndView list(
+    public ModelAndView listGet(
         @RequestParam(defaultValue = "1") int page,
         @RequestParam(required = false) String searchType,
         @RequestParam(required = false) String searchKeyword
@@ -31,12 +32,14 @@ public class UserController {
         mav.addObject("pagination", result.get("pagination"));
         mav.setViewName("user/list");
         return mav;
-    }
+    }      
 
     // 사용자 정보
-    @GetMapping("/read")
-    public ModelAndView read(UserVo userVo) {
+    @GetMapping("/{userId}")
+    public ModelAndView readGet(@PathVariable("userId") String userId) {
         ModelAndView mav = new ModelAndView();
+        UserVo userVo = new UserVo();
+        userVo.setUserId(userId);
         userVo = userService.read(userVo);
         mav.addObject("userVo", userVo);
         mav.setViewName("user/read");
@@ -44,8 +47,8 @@ public class UserController {
     }
 
     // 사용자 삭제
-    @PostMapping("/delete")
-    public ModelAndView delete(UserVo userVo, String password, RedirectAttributes redirectAttributes) {
+    @PostMapping("/{userId}/delete")
+    public ModelAndView deletePost(UserVo userVo, String password, RedirectAttributes redirectAttributes) {
         ModelAndView mav = new ModelAndView();
         boolean result = userService.delete(userVo, password);
         if (result) {

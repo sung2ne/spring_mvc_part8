@@ -30,4 +30,23 @@
         <beans:property name="defaultEncoding" value="UTF-8" />
     </beans:bean>
 
+    <!-- 인터셉터 빈 등록 -->
+    <beans:bean id="authInterceptor" class="com.example.spring.config.AuthInterceptor" />
+
+    <!-- 인터셉터 매핑 설정 -->
+    <interceptors>
+        <interceptor>
+            <mapping path="/**" />
+            <!-- 인증이 필요없는 경로 -->
+            <exclude-mapping path="/auth/login" />
+            <exclude-mapping path="/auth/register" />
+            <exclude-mapping path="/auth/find-user-id" />
+            <exclude-mapping path="/auth/reset-password" />
+            <exclude-mapping path="/auth/show-user-id" />
+            <exclude-mapping path="/auth/show-reset-password" />
+            <exclude-mapping path="/board/**" />
+            <beans:ref bean="authInterceptor" />
+        </interceptor>
+    </interceptors>
+
 </beans:beans>

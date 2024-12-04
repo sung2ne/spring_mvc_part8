@@ -73,12 +73,12 @@ public class BoardController {
                 mav.setViewName("redirect:/board/");
             } else {
                 redirectAttributes.addFlashAttribute("errorMessage", "게시글이 등록되지 않았습니다.");
-                mav.setViewName("redirect:/board/create/");
+                mav.setViewName("redirect:/board/create");
             }
         } catch (Exception e) {
             e.printStackTrace();
             redirectAttributes.addFlashAttribute("errorMessage", "파일 업로드 중 오류가 발생했습니다.");
-            mav.setViewName("redirect:/board/create/");
+            mav.setViewName("redirect:/board/create");
         }
         
         return mav;
@@ -86,7 +86,7 @@ public class BoardController {
 
     // 게시글 목록
     @GetMapping("/")
-    public ModelAndView listWithSearchGet(
+    public ModelAndView listGet(
         @RequestParam(defaultValue = "1") int page,
         @RequestParam(required = false) String searchType,
         @RequestParam(required = false) String searchKeyword
